@@ -37,8 +37,9 @@
             this.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.BackgroundImage = global::fox_and_geese.Properties.Resources.field;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.ClientSize = new System.Drawing.Size(600, 820);
+            this.ClientSize = new System.Drawing.Size(584, 781);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(600, 820);
             this.MinimumSize = new System.Drawing.Size(600, 820);
             this.Name = "MainForm";
