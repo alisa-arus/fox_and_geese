@@ -15,6 +15,8 @@ namespace fox_and_geese
         public MainForm()
         {
             InitializeComponent();
+            //this.BackgroundImage = Properties.Resources.field;
+
         }
     }
 }
