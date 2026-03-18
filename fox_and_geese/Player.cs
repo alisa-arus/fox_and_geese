@@ -18,5 +18,9 @@ namespace fox_and_geese
             this.current_position = cur_pos;
             this.possible_moves = pos_mov;
         }
+        protected Player() : this(new Position(), new List<Position>())
+        {
+            
+        }
     }
 }

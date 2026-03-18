@@ -54,7 +54,9 @@
     </Compile>
     <Compile Include="Fox.cs" />
     <Compile Include="Goose.cs" />
+    <Compile Include="IMove.cs" />
     <Compile Include="Player.cs" />
+    <Compile Include="Position.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Form1.resx">
