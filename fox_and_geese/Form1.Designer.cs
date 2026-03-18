@@ -28,7 +28,17 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.btn_2_0 = new System.Windows.Forms.Button();
             this.SuspendLayout();
+            // 
+            // btn_2_0
+            // 
+            this.btn_2_0.BackColor = System.Drawing.Color.White;
+            this.btn_2_0.Location = new System.Drawing.Point(196, 140);
+            this.btn_2_0.Name = "btn_2_0";
+            this.btn_2_0.Size = new System.Drawing.Size(25, 25);
+            this.btn_2_0.TabIndex = 0;
+            this.btn_2_0.UseVisualStyleBackColor = false;
             // 
             // MainForm
             // 
@@ -38,6 +48,7 @@
             this.BackgroundImage = global::fox_and_geese.Properties.Resources.field;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.ClientSize = new System.Drawing.Size(584, 781);
+            this.Controls.Add(this.btn_2_0);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(600, 820);
@@ -50,6 +61,8 @@
         }
 
         #endregion
+
+        private System.Windows.Forms.Button btn_2_0;
     }
 }
 
