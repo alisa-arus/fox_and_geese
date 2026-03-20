@@ -47,7 +47,7 @@ namespace fox_and_geese
                     if (IsAvailable(row, col))
                     {
                         // расставляем гусей
-                        if (row < 3 || (row == 3 && (col < 2 || col > 4)))
+                        if (row < 3 || (row == 2 && (col < 2 || col > 4)))
                         {
                             grid[row, col] = "Гусь";
                         }
@@ -59,7 +59,7 @@ namespace fox_and_geese
                         // пустые игровые поля
                         else
                         {
-                            grid[row, col] = "пусто";
+                            grid[row, col] = "";
                         }
                     }
                     // позиции вне игрового поля
@@ -88,7 +88,7 @@ namespace fox_and_geese
         // получение названия фигуры по координатам
         public string GetFigure(int row, int col)
         {
-            return IsAvailable(row, col) ? grid[row, col] : "пусто";
+            return IsAvailable(row, col) ? grid[row, col] : "";
         }
 
         // перемещение фигуры
