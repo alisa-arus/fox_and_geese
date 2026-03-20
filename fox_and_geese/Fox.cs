@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace fox_and_geese
 {
-    public class Fox : Player, IMove
+    public class Fox : Figure, IMove
     {
         public List<Position> CheckPossibleMoves(Position actual_position)
         {

@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace fox_and_geese
 {
-    internal class RoundButton : Button
+    public class RoundButton : Button
     {
         protected override void OnPaint(System.Windows.Forms.PaintEventArgs e)
         {
