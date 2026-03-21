@@ -72,7 +72,7 @@ namespace fox_and_geese
                 Size = new Size(200, 25),
                 Font = new Font("Arial", 10),
                 Text = "Осталось гусей: 13",
-                ForeColor = Color.DarkBlue
+                ForeColor = Color.White
             };
 
             captureCountLabel = new Label
@@ -81,12 +81,12 @@ namespace fox_and_geese
                 Size = new Size(200, 25),
                 Font = new Font("Arial", 10),
                 Text = "Съедено гусей: 0",
-                ForeColor = Color.DarkRed
+                ForeColor = Color.White
             };
 
             newGameButton = new Button
             {
-                Location = new Point(250, 7 * CellSize + 60),
+                Location = new Point(300, 7 * CellSize + 60),
                 Size = new Size(100, 35),
                 Text = "Новая игра",
                 BackColor = Color.LightGreen,
@@ -96,7 +96,7 @@ namespace fox_and_geese
 
             undoButton = new Button
             {
-                Location = new Point(360, 7 * CellSize + 60),
+                Location = new Point(400, 7 * CellSize + 60),
                 Size = new Size(80, 35),
                 Text = "Отмена",
                 BackColor = Color.LightCoral,

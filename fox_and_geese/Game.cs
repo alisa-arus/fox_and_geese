@@ -73,13 +73,16 @@ namespace fox_and_geese
 
             // Проверяем победу ТОЛЬКО после завершения хода и смены игрока
             var winner = rules.CheckWinCondition(Board);
-            if (winner == PlayerType.Fox)
+            if (winner == null)
             {
-                State = GameState.FoxWon;
-            }
-            else if (winner == PlayerType.Goose)
-            {
-                State = GameState.GeeseWon;
+                if (winner == PlayerType.Fox)
+                {
+                    State = GameState.FoxWon;
+                }
+                else if (winner == PlayerType.Goose)
+                {
+                    State = GameState.GeeseWon;
+                }
             }
 
             lastCaptureCount = 0;

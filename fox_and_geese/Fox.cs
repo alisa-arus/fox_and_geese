@@ -52,8 +52,8 @@ namespace fox_and_geese
                 new Position(-1, 0), new Position(1, 0),
                 new Position(0, -1), new Position(0, 1),
                 // Диагональные
-                new Position(-1, -1), new Position(-1, 1),
-                new Position(1, -1), new Position(1, 1)
+                //new Position(-1, -1), new Position(-1, 1),
+                //new Position(1, -1), new Position(1, 1)
             };
 
             foreach (var dir in allDirections)

@@ -31,7 +31,7 @@ namespace fox_and_geese
             return validMoves.Any(m => m.To.Equals(move.To));
         }
 
-        public PlayerType CheckWinCondition(Board board)
+        public PlayerType? CheckWinCondition(Board board)
         {
             var fox = board.GetFox();
             var geese = board.GetGeese();
@@ -55,13 +55,13 @@ namespace fox_and_geese
             }
 
             // Игра продолжается
-            return PlayerType.Fox; // Возвращаем Fox как "нет победителя"
+            return null;
         }
 
-        public bool IsFoxWinByGeeseCount(int geeseCount)
-        {
-            return geeseCount <= FOX_WIN_CONDITION;
-        }
+        //public bool IsFoxWinByGeeseCount(int geeseCount)
+        //{
+        //    return geeseCount <= FOX_WIN_CONDITION;
+        //}
 
         public int GetGeeseToCapture()
         {

@@ -87,7 +87,7 @@ namespace fox_and_geese
                 return;
             }
 
-            Button clickedCell = sender as Button;
+            RoundButton clickedCell = sender as RoundButton;
             Position clickedPos = (Position)clickedCell.Tag;
 
             if (!game.Board.IsPositionValid(clickedPos))
@@ -138,7 +138,7 @@ namespace fox_and_geese
                         {
                             int captureCount = game.GetCaptureCount();
                             int remainingGeese = game.GetRemainingGeeseCount();
-                            statusLabel.Text = $"🦊 Лиса рубит! Съедено гусей: {captureCount + 1} (осталось: {remainingGeese})";
+                            statusLabel.Text = $"Лиса рубит! Съедено гусей: {captureCount + 1} (осталось: {remainingGeese})";
                             statusLabel.ForeColor = Color.Red;
                         }
                     }
@@ -149,7 +149,7 @@ namespace fox_and_geese
                         errorMessage += "Лиса ходит по горизонтали, вертикали и диагонали\n";
                         errorMessage += "Лиса может рубить гусей, перепрыгивая через них\n";
                         errorMessage += "При рубке лиса ходит несколько раз подряд\n";
-                        errorMessage += "Цель лисы: съесть 5 гусей (чтобы осталось 8)\n";
+                        errorMessage += "Цель лисы: есть гусей, пока не останется 8 шт.)\n";
                         errorMessage += "Цель гусей: заблокировать лису";
 
                         MessageBox.Show(errorMessage, "Ошибка",
