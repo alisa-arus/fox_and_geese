@@ -8,6 +8,7 @@ namespace fox_and_geese
     {
         private static GameRules instance;
         private const int INITIAL_GEESE_COUNT = 13;
+        private const int FOX_WIN_CONDITION = 8; // Лиса побеждает, когда остается 8 гусей (съедено 5)
 
         private GameRules() { }
 
@@ -36,43 +37,35 @@ namespace fox_and_geese
             var geese = board.GetGeese();
             int currentGeeseCount = geese.Count;
 
-            // Победа лисы: съела всех гусей
-            if (currentGeeseCount == 0)
+            // Проверка победы лисы: осталось 8 или меньше гусей (съедено 5 или больше)
+            // Важно: проверяем ТОЛЬКО если игра активна и был совершен хотя бы один ход
+            if (currentGeeseCount <= FOX_WIN_CONDITION)
+            {
                 return PlayerType.Fox;
-
-            // Победа лисы: съела достаточно гусей (8 из 13)
-            int capturedGeese = INITIAL_GEESE_COUNT - currentGeeseCount;
-            if (capturedGeese >= 8)
-                return PlayerType.Fox;
+            }
 
             // Проверка победы гусей: лиса не может сделать ход
             if (fox != null)
             {
                 var foxMoves = fox.GetValidMoves(board);
                 if (foxMoves.Count == 0)
+                {
                     return PlayerType.Goose;
+                }
             }
-
-            // Проверка победы гусей: все гуси заблокированы
-            bool anyGooseCanMove = geese.Any(goose => goose.GetValidMoves(board).Count > 0);
-            if (!anyGooseCanMove && geese.Count > 0)
-                return PlayerType.Goose;
-
-            // Проверка победы лисы: достигла края креста
-            if (fox != null && IsFoxAtEdge(board, fox))
-                return PlayerType.Fox;
 
             // Игра продолжается
             return PlayerType.Fox; // Возвращаем Fox как "нет победителя"
         }
 
-        private bool IsFoxAtEdge(Board board, Fox fox)
+        public bool IsFoxWinByGeeseCount(int geeseCount)
         {
-            // Проверяем, достигла ли лиса края креста
-            var pos = fox.Position;
+            return geeseCount <= FOX_WIN_CONDITION;
+        }
 
-            // Крайние позиции креста 3x3 на поле 7x7
-            return pos.X == 0 || pos.X == 6 || pos.Y == 0 || pos.Y == 6;
+        public int GetGeeseToCapture()
+        {
+            return INITIAL_GEESE_COUNT - FOX_WIN_CONDITION;
         }
 
         public List<Move> GetAvailableMoves(Board board, PlayerType player)
@@ -102,6 +95,11 @@ namespace fox_and_geese
         public int GetInitialGeeseCount()
         {
             return INITIAL_GEESE_COUNT;
+        }
+
+        public int GetFoxWinCondition()
+        {
+            return FOX_WIN_CONDITION;
         }
     }
 }

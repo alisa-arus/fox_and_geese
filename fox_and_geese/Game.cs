@@ -11,18 +11,20 @@ namespace fox_and_geese
         public GameState State { get; private set; }
         private GameRules rules;
         private Stack<Move> moveHistory;
-        private bool isCaptureSequence; // Флаг для последовательности захватов
-        private int lastCaptureCount; // Счетчик захватов в текущей последовательности
+        private bool isCaptureSequence;
+        private int lastCaptureCount;
+        private bool isFirstMove; // Флаг для отслеживания первого хода
 
         public Game()
         {
-            Board = new Board(7); // Поле 7x7 с крестом 3x3 в середине
+            Board = new Board(7);
             CurrentTurn = PlayerType.Goose; // Гуси ходят первыми
             State = GameState.Active;
             rules = GameRules.Instance;
             moveHistory = new Stack<Move>();
             isCaptureSequence = false;
             lastCaptureCount = 0;
+            isFirstMove = true;
         }
 
         public bool MakeMove(Move move)
@@ -37,8 +39,13 @@ namespace fox_and_geese
             move.Execute(Board);
             moveHistory.Push(move);
 
-            // Запоминаем, был ли захват
             bool wasCapture = move.CapturedPiece != null;
+
+            // Сбрасываем флаг первого хода после первого хода
+            if (isFirstMove)
+            {
+                isFirstMove = false;
+            }
 
             // Проверяем дополнительные захваты для лисы
             if (CurrentTurn == PlayerType.Fox && wasCapture)
@@ -48,9 +55,9 @@ namespace fox_and_geese
 
                 if (additionalCaptures.Any())
                 {
-                    // Если есть дополнительные захваты, лиса ходит снова
                     isCaptureSequence = true;
                     lastCaptureCount++;
+                    // Не проверяем победу во время последовательности захватов
                     return true;
                 }
                 else
@@ -60,17 +67,22 @@ namespace fox_and_geese
             }
 
             isCaptureSequence = false;
-            lastCaptureCount = 0;
 
             // Смена игрока
             CurrentTurn = CurrentTurn == PlayerType.Fox ? PlayerType.Goose : PlayerType.Fox;
 
-            // Проверка победы
+            // Проверяем победу ТОЛЬКО после завершения хода и смены игрока
             var winner = rules.CheckWinCondition(Board);
             if (winner == PlayerType.Fox)
+            {
                 State = GameState.FoxWon;
+            }
             else if (winner == PlayerType.Goose)
+            {
                 State = GameState.GeeseWon;
+            }
+
+            lastCaptureCount = 0;
 
             return true;
         }
@@ -79,13 +91,11 @@ namespace fox_and_geese
         {
             if (moveHistory.Count > 0)
             {
-                // Отменяем все ходы в последовательности захвата
                 while (moveHistory.Count > 0)
                 {
                     var lastMove = moveHistory.Pop();
                     lastMove.Undo(Board);
 
-                    // Если предыдущий ход был сделан другим игроком, останавливаемся
                     if (moveHistory.Count > 0 && moveHistory.Peek().MovedPiece.Type != lastMove.MovedPiece.Type)
                         break;
                 }
@@ -95,6 +105,7 @@ namespace fox_and_geese
                 State = GameState.Active;
                 isCaptureSequence = false;
                 lastCaptureCount = 0;
+                isFirstMove = moveHistory.Count == 0;
             }
         }
 
@@ -104,7 +115,7 @@ namespace fox_and_geese
                 return PlayerType.Fox;
             if (State == GameState.GeeseWon)
                 return PlayerType.Goose;
-            return PlayerType.Fox; // Игра не окончена
+            return PlayerType.Fox;
         }
 
         public bool IsGameOver()
@@ -120,6 +131,26 @@ namespace fox_and_geese
         public int GetCaptureCount()
         {
             return lastCaptureCount;
+        }
+
+        public int GetRemainingGeeseCount()
+        {
+            return Board.GetGeeseCount();
+        }
+
+        public int GetCapturedGeeseCount()
+        {
+            return rules.GetInitialGeeseCount() - Board.GetGeeseCount();
+        }
+
+        public int GetGeeseNeededForFoxWin()
+        {
+            return rules.GetGeeseToCapture();
+        }
+
+        public bool IsFirstMove()
+        {
+            return isFirstMove;
         }
     }
 }

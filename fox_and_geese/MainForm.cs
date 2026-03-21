@@ -9,7 +9,7 @@ namespace fox_and_geese
     public partial class MainForm : Form
     {
         private Game game;
-        private Button[,] cells;
+        private RoundButton[,] cells;
         private const int CellSize = 65;
         private Panel gamePanel;
         private Label statusLabel;
@@ -19,8 +19,8 @@ namespace fox_and_geese
         private Button undoButton;
         private Position selectedPosition;
         private Color enabledCellColor = Color.SandyBrown;
-        private Color disabledCellColor = Color.DimGray;
-        private Color centerAreaColor = Color.Peru;
+        //private Color disabledCellColor = Color.DimGray;
+        //private Color centerAreaColor = Color.Peru;
 
         public MainForm()
         {
@@ -40,14 +40,15 @@ namespace fox_and_geese
 
         private void CreateBoard()
         {
-            cells = new Button[7, 7];
+            cells = new RoundButton[7, 7];
             gamePanel.Controls.Clear();
+            gamePanel.BackColor = Color.DimGray;
 
             for (int row = 0; row < 7; row++)
             {
                 for (int col = 0; col < 7; col++)
                 {
-                    Button cell = new Button
+                    RoundButton cell = new RoundButton
                     {
                         Size = new Size(CellSize, CellSize),
                         Location = new Point(col * CellSize, row * CellSize),
@@ -56,8 +57,6 @@ namespace fox_and_geese
                         Font = new Font("Segoe UI Emoji", 28)
                     };
 
-                    cell.FlatAppearance.BorderSize = 1;
-                    cell.FlatAppearance.BorderColor = Color.Black;
                     cell.Click += Cell_Click;
 
                     // Проверяем, является ли клетка доступной для игры
@@ -65,24 +64,12 @@ namespace fox_and_geese
                     var tempBoard = new Board(7);
                     if (tempBoard.IsPositionValid(pos))
                     {
-                        // Центральная область креста (3x3) выделяется другим цветом
-                        if (row >= 2 && row <= 4 && col >= 2 && col <= 4)
-                        {
-                            cell.BackColor = centerAreaColor;
-                        }
-                        else
-                        {
-                            cell.BackColor = enabledCellColor;
-                        }
+                        cell.BackColor = enabledCellColor;
                         cell.Enabled = true;
                     }
                     else
                     {
-                        cell.BackColor = disabledCellColor;
-                        cell.Enabled = false;
-                        cell.Text = "✖";
-                        cell.ForeColor = Color.DarkRed;
-                        cell.Font = new Font("Segoe UI Emoji", 20);
+                        cell.Visible = false;
                     }
 
                     cells[row, col] = cell;
@@ -103,13 +90,11 @@ namespace fox_and_geese
             Button clickedCell = sender as Button;
             Position clickedPos = (Position)clickedCell.Tag;
 
-            // Проверяем, доступна ли клетка
             if (!game.Board.IsPositionValid(clickedPos))
                 return;
 
             if (selectedPosition == null)
             {
-                // Выбор фигуры
                 var piece = game.Board.GetPieceAt(clickedPos);
                 if (piece != null && piece.Type == game.CurrentTurn)
                 {
@@ -124,13 +109,11 @@ namespace fox_and_geese
             }
             else
             {
-                // Попытка сделать ход
                 var piece = game.Board.GetPieceAt(selectedPosition);
                 if (piece != null)
                 {
                     var move = new Move(piece, selectedPosition, clickedPos, null);
 
-                    // Проверяем, есть ли захват
                     if (piece is Fox fox)
                     {
                         var captureMoves = fox.GetCaptureMoves(game.Board);
@@ -154,17 +137,20 @@ namespace fox_and_geese
                         else if (game.IsCaptureSequence())
                         {
                             int captureCount = game.GetCaptureCount();
-                            statusLabel.Text = $"🦊 Лиса рубит! Съедено гусей: {captureCount + 1}";
+                            int remainingGeese = game.GetRemainingGeeseCount();
+                            statusLabel.Text = $"🦊 Лиса рубит! Съедено гусей: {captureCount + 1} (осталось: {remainingGeese})";
                             statusLabel.ForeColor = Color.Red;
                         }
                     }
                     else
                     {
                         string errorMessage = "Недопустимый ход!\n\n";
-                        errorMessage += "• Гуси ходят только по горизонтали и вертикали\n";
-                        errorMessage += "• Лиса ходит по горизонтали, вертикали и диагонали\n";
-                        errorMessage += "• Лиса может рубить гусей, перепрыгивая через них\n";
-                        errorMessage += "• При рубке лиса ходит несколько раз подряд";
+                        errorMessage += "Гуси ходят только по горизонтали и вертикали\n";
+                        errorMessage += "Лиса ходит по горизонтали, вертикали и диагонали\n";
+                        errorMessage += "Лиса может рубить гусей, перепрыгивая через них\n";
+                        errorMessage += "При рубке лиса ходит несколько раз подряд\n";
+                        errorMessage += "Цель лисы: съесть 5 гусей (чтобы осталось 8)\n";
+                        errorMessage += "Цель гусей: заблокировать лису";
 
                         MessageBox.Show(errorMessage, "Ошибка",
                             MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -217,22 +203,7 @@ namespace fox_and_geese
                 for (int col = 0; col < 7; col++)
                 {
                     var pos = new Position(row, col);
-                    if (game.Board.IsPositionValid(pos))
-                    {
-                        // Восстанавливаем оригинальный цвет
-                        if (row >= 2 && row <= 4 && col >= 2 && col <= 4)
-                        {
-                            cells[row, col].BackColor = centerAreaColor;
-                        }
-                        else
-                        {
-                            cells[row, col].BackColor = enabledCellColor;
-                        }
-                    }
-                    else
-                    {
-                        cells[row, col].BackColor = disabledCellColor;
-                    }
+                    cells[row, col].BackColor = enabledCellColor;
                     cells[row, col].FlatAppearance.BorderSize = 1;
                     cells[row, col].FlatAppearance.BorderColor = Color.Black;
                     cells[row, col].Text = "";
@@ -277,14 +248,14 @@ namespace fox_and_geese
             {
                 var winner = game.GetWinner();
                 statusLabel.Text = winner == PlayerType.Fox ?
-                    "🦊 Лиса победила! 🏆" : "🦆 Гуси победили! 🏆";
+                    "Лиса победила!" : "Гуси победили!";
                 statusLabel.ForeColor = winner == PlayerType.Fox ? Color.Red : Color.Green;
                 statusLabel.Font = new Font("Arial", 14, FontStyle.Bold);
             }
             else
             {
                 statusLabel.Text = game.CurrentTurn == PlayerType.Fox ?
-                    "🦊 Ход лисы" : "🦆 Ход гусей";
+                    "Ход лисы" : "Ход гусей";
                 statusLabel.ForeColor = Color.Black;
                 statusLabel.Font = new Font("Arial", 12, FontStyle.Bold);
             }
@@ -296,8 +267,8 @@ namespace fox_and_geese
             int initialGeese = 13;
             int capturedGeese = initialGeese - geeseCount;
 
-            geeseCountLabel.Text = $"🦆 Осталось гусей: {geeseCount}";
-            captureCountLabel.Text = $"🦊 Съедено гусей: {capturedGeese}";
+            geeseCountLabel.Text = $"Осталось гусей: {geeseCount}";
+            captureCountLabel.Text = $"Съедено гусей: {capturedGeese}";
 
             if (capturedGeese >= 8)
             {
@@ -314,15 +285,15 @@ namespace fox_and_geese
             int capturedGeese = 13 - geeseCount;
 
             string message = winner == PlayerType.Fox ?
-                $"🦊 Лиса победила! 🎉\n\nСъедено гусей: {capturedGeese}" :
-                $"🦆 Гуси победили! 🎉\n\nОсталось гусей: {geeseCount}";
+                $"Лиса победила!\n\nСъедено гусей: {capturedGeese}" :
+                $"Гуси победили!\n\nОсталось гусей: {geeseCount}";
 
             MessageBox.Show(message, "Конец игры", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private string GetPlayerName(PlayerType player)
         {
-            return player == PlayerType.Fox ? "лиса 🦊" : "гуси 🦆";
+            return player == PlayerType.Fox ? "лиса" : "гуси";
         }
 
         private void NewGameButton_Click(object sender, EventArgs e)
