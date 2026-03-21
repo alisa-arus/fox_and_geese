@@ -69,7 +69,7 @@ namespace fox_and_geese
 
             if (selected == null)
             {
-                string figure = gameBoard.GetFigure(p.Y, p.X);
+                string figure = gameBoard.GetFigure(p.X, p.Y);
                 if (figure != null && ((isFoxTurn && figure == "Лиса") || (!isFoxTurn && figure == "Гусь")))
                 {
                     selected = p;
@@ -91,13 +91,13 @@ namespace fox_and_geese
 
         private bool ValidateAndMove(Point from, Point to)
         {
-            if (gameBoard.GetFigure(to.Y, to.X) != null)
+            if (gameBoard.GetFigure(to.X, to.Y) != null)
             {
                 return false;
             }
             int dx = to.X - from.X;
             int dy = to.Y - from.Y;
-            string p = gameBoard.GetFigure(from.Y, from.X);
+            string p = gameBoard.GetFigure(from.X, from.Y);
 
             if (p == "Гусь" && Math.Abs(dx) + Math.Abs(dy) == 1 && dy >= 0)
             {
@@ -114,9 +114,9 @@ namespace fox_and_geese
                 if (Math.Abs(dx) == 2 && dy == 0 || Math.Abs(dy) == 2 && dx == 0)
                 {
                     Point mid = new Point(from.X + dx / 2, from.Y + dy / 2);
-                    if (gameBoard.GetFigure(mid.Y, mid.X) == "Гусь")
+                    if (gameBoard.GetFigure(mid.X, mid.Y) == "Гусь")
                     {
-                        gameBoard.Remove(mid.Y, mid.X);
+                        gameBoard.Remove(mid.X, mid.Y);
                         gameBoard.Move(from, to);
                         return true;
                     }
@@ -128,13 +128,13 @@ namespace fox_and_geese
         // временный клон логики для подсветки без совершения хода
         private bool ValidateAndMoveNoExec(Point from, Point to)
         {
-            if (gameBoard.GetFigure(to.Y, to.X) != null)
+            if (gameBoard.GetFigure(to.X, to.Y) != null)
             {
                 return false;
             }
             int dx = to.X - from.X;
             int dy = to.Y - from.Y;
-            string p = gameBoard.GetFigure(from.Y, from.X);
+            string p = gameBoard.GetFigure(from.X, from.Y);
             if (p == "Гусь")
             {
                 return Math.Abs(dx) + Math.Abs(dy) == 1 && dy >= 0;
@@ -148,7 +148,7 @@ namespace fox_and_geese
                 if (Math.Abs(dx) == 2 && dy == 0 || Math.Abs(dy) == 2 && dx == 0)
                 {
                     Point mid = new Point(from.X + dx / 2, from.Y + dy / 2);
-                    return gameBoard.GetFigure(mid.Y, mid.X) == "Гусь";
+                    return gameBoard.GetFigure(mid.X, mid.Y) == "Гусь";
                 }
             }
             return false;
@@ -157,12 +157,12 @@ namespace fox_and_geese
         // подсветка возможных ходов
         private void HighlightMoves(Point from)
         {
-            buttons[from.Y, from.X].BackColor = Color.Yellow;
+            buttons[from.X, from.Y].BackColor = Color.Yellow;
             for (int row = 0; row < 7; row++)
             {
                 for (int col = 0; col < 7; col++)
                 {
-                    if (buttons[row, col] != null && ValidateAndMoveNoExec(from, new Point(col, row)))
+                    if (buttons[row, col] != null && ValidateAndMoveNoExec(from, new Point(row, col)))
                     {
                         buttons[row, col].BackColor = Color.LightGreen;
                     }
@@ -192,7 +192,7 @@ namespace fox_and_geese
                     {
                         string p = gameBoard.GetFigure(row, col);
                         buttons[row, col].Text = p ?? "";
-                        buttons[row, col].ForeColor = (p == "F") ? Color.Red : Color.Blue;
+                        buttons[row, col].ForeColor = (p == "Лиса") ? Color.Red : Color.Blue;
                     }
                 }
             }
@@ -224,7 +224,7 @@ namespace fox_and_geese
             {
                 for (int col = 0; col < 7; col++)
                 {
-                    if (buttons[row, col] != null && ValidateAndMoveNoExec(p, new Point(col, row)))
+                    if (buttons[row, col] != null && ValidateAndMoveNoExec(p, new Point(row, col)))
                     {
                         return false;
                     }
