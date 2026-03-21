@@ -13,11 +13,14 @@ namespace fox_and_geese
         private const int CellSize = 65;
         private Panel gamePanel;
         private Label statusLabel;
+        private Label geeseCountLabel;
+        private Label captureCountLabel;
         private Button newGameButton;
         private Button undoButton;
         private Position selectedPosition;
         private Color enabledCellColor = Color.SandyBrown;
         private Color disabledCellColor = Color.DimGray;
+        private Color centerAreaColor = Color.Peru;
 
         public MainForm()
         {
@@ -32,6 +35,7 @@ namespace fox_and_geese
             CreateBoard();
             UpdateBoard();
             UpdateStatus();
+            UpdateCounters();
         }
 
         private void CreateBoard()
@@ -61,7 +65,15 @@ namespace fox_and_geese
                     var tempBoard = new Board(7);
                     if (tempBoard.IsPositionValid(pos))
                     {
-                        cell.BackColor = enabledCellColor;
+                        // Центральная область креста (3x3) выделяется другим цветом
+                        if (row >= 2 && row <= 4 && col >= 2 && col <= 4)
+                        {
+                            cell.BackColor = centerAreaColor;
+                        }
+                        else
+                        {
+                            cell.BackColor = enabledCellColor;
+                        }
                         cell.Enabled = true;
                     }
                     else
@@ -70,6 +82,7 @@ namespace fox_and_geese
                         cell.Enabled = false;
                         cell.Text = "✖";
                         cell.ForeColor = Color.DarkRed;
+                        cell.Font = new Font("Segoe UI Emoji", 20);
                     }
 
                     cells[row, col] = cell;
@@ -132,18 +145,29 @@ namespace fox_and_geese
                         ClearHighlights();
                         UpdateBoard();
                         UpdateStatus();
+                        UpdateCounters();
 
                         if (game.IsGameOver())
                         {
                             ShowGameOverMessage();
                         }
+                        else if (game.IsCaptureSequence())
+                        {
+                            int captureCount = game.GetCaptureCount();
+                            statusLabel.Text = $"🦊 Лиса рубит! Съедено гусей: {captureCount + 1}";
+                            statusLabel.ForeColor = Color.Red;
+                        }
                     }
                     else
                     {
-                        MessageBox.Show("Недопустимый ход!\n" +
-                            "Гуси ходят только вперед по диагонали.\n" +
-                            "Лиса ходит по диагонали и может есть гусей.",
-                            "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        string errorMessage = "Недопустимый ход!\n\n";
+                        errorMessage += "• Гуси ходят только по горизонтали и вертикали\n";
+                        errorMessage += "• Лиса ходит по горизонтали, вертикали и диагонали\n";
+                        errorMessage += "• Лиса может рубить гусей, перепрыгивая через них\n";
+                        errorMessage += "• При рубке лиса ходит несколько раз подряд";
+
+                        MessageBox.Show(errorMessage, "Ошибка",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         selectedPosition = null;
                         ClearHighlights();
                     }
@@ -166,6 +190,17 @@ namespace fox_and_geese
                     cells[move.To.X, move.To.Y].BackColor = Color.LightGreen;
                     cells[move.To.X, move.To.Y].FlatAppearance.BorderColor = Color.Green;
                     cells[move.To.X, move.To.Y].FlatAppearance.BorderSize = 3;
+
+                    // Если это рубка, добавляем специальный индикатор
+                    if (move.CapturedPiece != null)
+                    {
+                        cells[move.To.X, move.To.Y].Text = "🔥";
+                        cells[move.To.X, move.To.Y].Font = new Font("Segoe UI Emoji", 20);
+                    }
+                    else
+                    {
+                        cells[move.To.X, move.To.Y].Text = "";
+                    }
                 }
             }
 
@@ -184,7 +219,15 @@ namespace fox_and_geese
                     var pos = new Position(row, col);
                     if (game.Board.IsPositionValid(pos))
                     {
-                        cells[row, col].BackColor = enabledCellColor;
+                        // Восстанавливаем оригинальный цвет
+                        if (row >= 2 && row <= 4 && col >= 2 && col <= 4)
+                        {
+                            cells[row, col].BackColor = centerAreaColor;
+                        }
+                        else
+                        {
+                            cells[row, col].BackColor = enabledCellColor;
+                        }
                     }
                     else
                     {
@@ -192,6 +235,8 @@ namespace fox_and_geese
                     }
                     cells[row, col].FlatAppearance.BorderSize = 1;
                     cells[row, col].FlatAppearance.BorderColor = Color.Black;
+                    cells[row, col].Text = "";
+                    cells[row, col].Font = new Font("Segoe UI Emoji", 28);
                 }
             }
         }
@@ -245,12 +290,33 @@ namespace fox_and_geese
             }
         }
 
+        private void UpdateCounters()
+        {
+            int geeseCount = game.Board.GetGeeseCount();
+            int initialGeese = 13;
+            int capturedGeese = initialGeese - geeseCount;
+
+            geeseCountLabel.Text = $"🦆 Осталось гусей: {geeseCount}";
+            captureCountLabel.Text = $"🦊 Съедено гусей: {capturedGeese}";
+
+            if (capturedGeese >= 8)
+            {
+                captureCountLabel.ForeColor = Color.Red;
+                captureCountLabel.Font = new Font("Arial", 10, FontStyle.Bold);
+            }
+        }
+
+
         private void ShowGameOverMessage()
         {
             var winner = game.GetWinner();
+            int geeseCount = game.Board.GetGeeseCount();
+            int capturedGeese = 13 - geeseCount;
+
             string message = winner == PlayerType.Fox ?
-                "🦊 Лиса победила! Поздравляем! 🎉" :
-                "🦆 Гуси победили! Отличная стратегия! 🎉";
+                $"🦊 Лиса победила! 🎉\n\nСъедено гусей: {capturedGeese}" :
+                $"🦆 Гуси победили! 🎉\n\nОсталось гусей: {geeseCount}";
+
             MessageBox.Show(message, "Конец игры", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -274,6 +340,7 @@ namespace fox_and_geese
                 ClearHighlights();
                 UpdateBoard();
                 UpdateStatus();
+                UpdateCounters();
             }
             else
             {

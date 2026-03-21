@@ -12,13 +12,15 @@ namespace fox_and_geese
         public override List<Move> GetValidMoves(Board board)
         {
             var moves = new List<Move>();
-            // Гуси ходят только вперед (вверх по доске)
-            var directions = new[]
+
+            // Гуси ходят только по горизонтали и вертикали (не по диагонали)
+            var orthogonalDirections = new[]
             {
-                new Position(-1, -1), new Position(-1, 0), new Position(-1, 1)
+                new Position(-1, 0), new Position(1, 0), // Вертикаль
+                new Position(0, -1), new Position(0, 1)  // Горизонталь
             };
 
-            foreach (var dir in directions)
+            foreach (var dir in orthogonalDirections)
             {
                 var newPos = new Position(Position.X + dir.X, Position.Y + dir.Y);
                 if (board.IsPositionValid(newPos) && board.GetPieceAt(newPos) == null)

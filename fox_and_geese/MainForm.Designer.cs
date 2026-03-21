@@ -58,15 +58,33 @@ namespace fox_and_geese
 
             statusLabel = new Label
             {
-                Location = new Point(25, 7 * CellSize + 40),
-                Size = new Size(300, 30),
+                Location = new Point(25, 7 * CellSize + 30),
+                Size = new Size(350, 30),
                 Font = new Font("Arial", 12, FontStyle.Bold),
                 Text = "Ход гусей 🦆"
             };
 
+            geeseCountLabel = new Label
+            {
+                Location = new Point(25, 7 * CellSize + 60),
+                Size = new Size(300, 25),
+                Font = new Font("Arial", 10),
+                Text = "Осталось гусей: 13",
+                ForeColor = Color.DarkBlue
+            };
+
+            captureCountLabel = new Label
+            {
+                Location = new Point(25, 7 * CellSize + 85),
+                Size = new Size(300, 25),
+                Font = new Font("Arial", 10),
+                Text = "Съедено гусей: 0",
+                ForeColor = Color.DarkRed
+            };
+
             newGameButton = new Button
             {
-                Location = new Point(350, 7 * CellSize + 40),
+                Location = new Point(350, 7 * CellSize + 30),
                 Size = new Size(100, 35),
                 Text = "Новая игра",
                 BackColor = Color.LightGreen,
@@ -76,7 +94,7 @@ namespace fox_and_geese
 
             undoButton = new Button
             {
-                Location = new Point(460, 7 * CellSize + 40),
+                Location = new Point(460, 7 * CellSize + 30),
                 Size = new Size(80, 35),
                 Text = "Отмена",
                 BackColor = Color.LightCoral,
@@ -86,6 +104,8 @@ namespace fox_and_geese
 
             this.Controls.Add(gamePanel);
             this.Controls.Add(statusLabel);
+            this.Controls.Add(geeseCountLabel);
+            this.Controls.Add(captureCountLabel);
             this.Controls.Add(newGameButton);
             this.Controls.Add(undoButton);
         }

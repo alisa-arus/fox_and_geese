@@ -35,5 +35,15 @@ namespace fox_and_geese
         {
             return Math.Abs(X - other.X) == 1 && Math.Abs(Y - other.Y) == 1;
         }
+
+        public Position GetMiddle(Position other)
+        {
+            return new Position((X + other.X) / 2, (Y + other.Y) / 2);
+        }
+
+        public int DistanceTo(Position other)
+        {
+            return Math.Abs(X - other.X) + Math.Abs(Y - other.Y);
+        }
     }
 }

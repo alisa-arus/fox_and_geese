@@ -23,36 +23,37 @@ namespace fox_and_geese
 
         private void InitializeValidPositions()
         {
-            // Создаем поле в виде креста 7x7
-            // Доступны все клетки, кроме углов (0,0), (0,6), (6,0), (6,6)
-            // и клеток, которые не входят в крест
+            // Создаем поле 7x7, где доступны только клетки, образующие крест 3x3 в середине
+            // Крест имеет ширину 3 клетки: центральная горизонталь и центральная вертикаль
 
-            for (int row = 0; row < Size; row++)
+            // Центральная горизонталь (строки 2,3,4)
+            for (int row = 2; row <= 4; row++)
             {
                 for (int col = 0; col < Size; col++)
                 {
-                    // Центральная горизонталь (3-я строка) - вся доступна
-                    if (row == 3)
-                    {
-                        validPositions.Add(new Position(row, col));
-                    }
-                    // Центральная вертикаль (3-й столбец) - вся доступна
-                    else if (col == 3)
-                    {
-                        validPositions.Add(new Position(row, col));
-                    }
-                    // Углы и некоторые другие клетки недоступны
-                    else if ((row == 0 || row == 6) && (col == 0 || col == 6))
-                    {
-                        // Углы недоступны
-                        continue;
-                    }
-                    else if (Math.Abs(row - 3) + Math.Abs(col - 3) <= 3)
-                    {
-                        // Добавляем клетки, находящиеся в радиусе 3 от центра (манхэттенское расстояние)
-                        validPositions.Add(new Position(row, col));
-                    }
+                    validPositions.Add(new Position(row, col));
                 }
+            }
+
+            // Центральная вертикаль (столбцы 2,3,4)
+            for (int col = 2; col <= 4; col++)
+            {
+                for (int row = 0; row < Size; row++)
+                {
+                    validPositions.Add(new Position(row, col));
+                }
+            }
+
+            // Удаляем углы креста (клетки, которые не входят в крест 3x3)
+            // Оставляем только те клетки, которые находятся на расстоянии не более 2 от центра
+            var center = new Position(3, 3);
+            var toRemove = validPositions
+                .Where(pos => Math.Abs(pos.X - center.X) > 2 && Math.Abs(pos.Y - center.Y) > 2)
+                .ToList();
+
+            foreach (var pos in toRemove)
+            {
+                validPositions.Remove(pos);
             }
         }
 
@@ -63,32 +64,19 @@ namespace fox_and_geese
             var fox = new Fox(foxPos);
             PlacePiece(fox, foxPos);
 
-            // Размещаем гусей в верхней части креста
-            // Гуси располагаются на всех доступных клетках выше центральной горизонтали
-            int gooseCount = 0;
-            foreach (var pos in validPositions)
-            {
-                if (pos.X < 3 && !pos.Equals(foxPos))
-                {
-                    var goose = new Goose(pos);
-                    PlacePiece(goose, pos);
-                    gooseCount++;
-                    if (gooseCount >= 13) break; // Обычно 13 гусей в классической версии
-                }
-            }
+            // Размещаем 13 гусей на всех доступных клетках, кроме центра
+            List<Position> availablePositions = validPositions
+                .Where(p => !p.Equals(foxPos))
+                .OrderBy(p => Math.Abs(p.X - 3) + Math.Abs(p.Y - 3)) // Сначала ближние к центру
+                .ThenBy(p => p.X)
+                .ThenBy(p => p.Y)
+                .ToList();
 
-            // Добавляем еще гусей по бокам если нужно
-            if (gooseCount < 13)
+            int geeseToPlace = Math.Min(13, availablePositions.Count);
+            for (int i = 0; i < geeseToPlace; i++)
             {
-                foreach (var pos in validPositions)
-                {
-                    if (pos.X == 3 && Math.Abs(pos.Y - 3) > 1 && !pos.Equals(foxPos) && gooseCount < 13)
-                    {
-                        var goose = new Goose(pos);
-                        PlacePiece(goose, pos);
-                        gooseCount++;
-                    }
-                }
+                var goose = new Goose(availablePositions[i]);
+                PlacePiece(goose, availablePositions[i]);
             }
         }
 
@@ -146,6 +134,16 @@ namespace fox_and_geese
         public List<Position> GetValidPositions()
         {
             return validPositions.ToList();
+        }
+
+        public int GetGeeseCount()
+        {
+            return GetGeese().Count;
+        }
+
+        public bool IsCenterPosition(Position pos)
+        {
+            return pos.X >= 2 && pos.X <= 4 && pos.Y >= 2 && pos.Y <= 4;
         }
     }
 }
