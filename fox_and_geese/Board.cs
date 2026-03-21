@@ -1,142 +1,151 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
+
 
 namespace fox_and_geese
 {
     public class Board
     {
-        // игровое поле
-        private string[,] grid = new string[7, 7];
-        // гуси
-        private int geeseCount = 13;
-        public int GeeseCount
-        {
-            get => geeseCount;
-            private set
-            {
-                if (value < 1)
-                {
-                    geeseCount = 1;
-                }
-                else if (value > 13)
-                {
-                    geeseCount = 13;
-                }
-                else
-                {
-                    geeseCount = value;
-                }
-            }
-        }
+        private Dictionary<Position, Piece> pieces;
+        public int Size { get; }
+        private HashSet<Position> validPositions;
 
-        public Board()
+        public Board(int size = 7)
         {
+            Size = size;
+            pieces = new Dictionary<Position, Piece>();
+            validPositions = new HashSet<Position>();
+            InitializeValidPositions();
             InitializeBoard();
         }
-        // первичная расстановка фигур на поле
+
+        private void InitializeValidPositions()
+        {
+            // Создаем поле в виде креста 7x7
+            // Доступны все клетки, кроме углов (0,0), (0,6), (6,0), (6,6)
+            // и клеток, которые не входят в крест
+
+            for (int row = 0; row < Size; row++)
+            {
+                for (int col = 0; col < Size; col++)
+                {
+                    // Центральная горизонталь (3-я строка) - вся доступна
+                    if (row == 3)
+                    {
+                        validPositions.Add(new Position(row, col));
+                    }
+                    // Центральная вертикаль (3-й столбец) - вся доступна
+                    else if (col == 3)
+                    {
+                        validPositions.Add(new Position(row, col));
+                    }
+                    // Углы и некоторые другие клетки недоступны
+                    else if ((row == 0 || row == 6) && (col == 0 || col == 6))
+                    {
+                        // Углы недоступны
+                        continue;
+                    }
+                    else if (Math.Abs(row - 3) + Math.Abs(col - 3) <= 3)
+                    {
+                        // Добавляем клетки, находящиеся в радиусе 3 от центра (манхэттенское расстояние)
+                        validPositions.Add(new Position(row, col));
+                    }
+                }
+            }
+        }
+
         private void InitializeBoard()
         {
-            for (int row = 0; row < 7; row++)
+            // Размещаем лису в центре
+            var foxPos = new Position(3, 3);
+            var fox = new Fox(foxPos);
+            PlacePiece(fox, foxPos);
+
+            // Размещаем гусей в верхней части креста
+            // Гуси располагаются на всех доступных клетках выше центральной горизонтали
+            int gooseCount = 0;
+            foreach (var pos in validPositions)
             {
-                for(int col = 0; col < 7; col++)
+                if (pos.X < 3 && !pos.Equals(foxPos))
                 {
-                    if (IsAvailable(row, col))
+                    var goose = new Goose(pos);
+                    PlacePiece(goose, pos);
+                    gooseCount++;
+                    if (gooseCount >= 13) break; // Обычно 13 гусей в классической версии
+                }
+            }
+
+            // Добавляем еще гусей по бокам если нужно
+            if (gooseCount < 13)
+            {
+                foreach (var pos in validPositions)
+                {
+                    if (pos.X == 3 && Math.Abs(pos.Y - 3) > 1 && !pos.Equals(foxPos) && gooseCount < 13)
                     {
-                        // расставляем гусей
-                        if (row < 3 || (row == 2 && (col < 2 || col > 4)))
-                        {
-                            grid[row, col] = "Гусь";
-                        }
-                        // лиса в центре
-                        else if (row == 3 && col == 3)
-                        {
-                            grid[row, col] = "Лиса";
-                        }
-                        // пустые игровые поля
-                        else
-                        {
-                            grid[row, col] = "";
-                        }
-                    }
-                    // позиции вне игрового поля
-                    else
-                    {
-                        grid[row, col] = null;
+                        var goose = new Goose(pos);
+                        PlacePiece(goose, pos);
+                        gooseCount++;
                     }
                 }
             }
         }
-        /// <summary>
-        /// Метод проверяет принадлежность позиции игровому полю (нахождение внутри "креста")
-        /// </summary>
-        /// <param name="row"></param>
-        /// <param name="col"></param>
-        /// <returns></returns>
-        public bool IsAvailable(int row, int col)
+
+        public void PlacePiece(Piece piece, Position pos)
         {
-            if (row < 0 || row >= 7 || col < 0 || col >= 7)
+            if (IsPositionValid(pos))
             {
-                return false;
-            }
-            return (col >= 2 && col <= 4) || (row >= 2 && row <= 4);
-        }
-
-        // получение названия фигуры по координатам
-        public string GetFigure(int row, int col)
-        {
-            return IsAvailable(row, col) ? grid[row, col] : "";
-        }
-
-        // перемещение фигуры
-        public void Move(Point from, Point to)
-        {
-            grid[to.X, to.Y] = grid[from.X, from.Y];
-            grid[from.X, from.Y] = null;
-        }
-
-        // удаление фигуры (лиса рубит гуся)
-        public void RemoveFigure(Point pos)
-        {
-            if (IsAvailable(pos.X, pos.Y))
-            {
-                grid[pos.X, pos.Y] = null;
+                pieces[pos] = piece;
+                piece.Position = pos;
             }
         }
 
-        // удаление гуся
-        public void Remove(int row, int col)
+        public void RemovePiece(Position pos)
         {
-            if (grid[row, col] == "Гусь")
-            {
-                GeeseCount--;
-                grid[row, col] = null;
-            }
+            pieces.Remove(pos);
         }
 
-        // проверка пустого места
-        public bool IsEmpty(int row, int col)
+        public Piece GetPieceAt(Position pos)
         {
-            return IsAvailable(row, col) && grid[row, col] == null;
+            pieces.TryGetValue(pos, out var piece);
+            return piece;
         }
 
-        // найти лису
-        public Point FindFox()
+        public bool IsPositionValid(Position pos)
         {
-            for (int row = 0; row < 7; row++)
+            return pos.X >= 0 && pos.X < Size &&
+                   pos.Y >= 0 && pos.Y < Size &&
+                   validPositions.Contains(pos);
+        }
+
+        public Fox GetFox()
+        {
+            return pieces.Values.OfType<Fox>().FirstOrDefault();
+        }
+
+        public List<Goose> GetGeese()
+        {
+            return pieces.Values.OfType<Goose>().ToList();
+        }
+
+        public Board Clone()
+        {
+            var newBoard = new Board(Size);
+            newBoard.pieces.Clear();
+
+            foreach (var piece in pieces.Values)
             {
-                for (int col = 0; col < 7; col++)
-                {
-                    if (grid[row, col] == "Лиса")
-                    {
-                        return new Point(row, col);
-                    }
-                }
+                var clonedPiece = piece.Clone();
+                newBoard.PlacePiece(clonedPiece, clonedPiece.Position);
             }
-            return Point.Empty;
+
+            return newBoard;
+        }
+
+        public List<Position> GetValidPositions()
+        {
+            return validPositions.ToList();
         }
     }
 }

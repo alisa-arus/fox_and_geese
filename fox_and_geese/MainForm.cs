@@ -1,236 +1,285 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+
 
 namespace fox_and_geese
 {
     public partial class MainForm : Form
     {
-        private Board gameBoard = new Board();
-        private RoundButton[,] buttons = new RoundButton[7, 7];
-        private Point? selected = null;
-        private bool isFoxTurn = false;
+        private Game game;
+        private Button[,] cells;
+        private const int CellSize = 65;
+        private Panel gamePanel;
         private Label statusLabel;
+        private Button newGameButton;
+        private Button undoButton;
+        private Position selectedPosition;
+        private Color enabledCellColor = Color.SandyBrown;
+        private Color disabledCellColor = Color.DimGray;
+
         public MainForm()
         {
-            this.Size = new Size(520, 570);
-            this.FormBorderStyle = FormBorderStyle.FixedToolWindow;
-            this.BackColor = Color.Gray;
-            this.Text = "Лиса и гуси";
-            this.StartPosition = FormStartPosition.CenterScreen;
-            statusLabel = new Label
-            {
-                Dock = DockStyle.Top,
-                Height = 50,
-                Font = new Font("Arial", 12, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleCenter,
-                BackColor = Color.White
-            };
-            this.Controls.Add(statusLabel);
-
-            InitButtons();
-            UpdateGUI();
+            InitializeComponent();
+            InitializeGame();
         }
 
-        private void InitButtons()
+        private void InitializeGame()
         {
+            game = new Game();
+            selectedPosition = null;
+            CreateBoard();
+            UpdateBoard();
+            UpdateStatus();
+        }
+
+        private void CreateBoard()
+        {
+            cells = new Button[7, 7];
+            gamePanel.Controls.Clear();
+
             for (int row = 0; row < 7; row++)
             {
-                for(int col = 0; col < 7; col++)
+                for (int col = 0; col < 7; col++)
                 {
-                    if (gameBoard.IsAvailable(row, col))
+                    Button cell = new Button
                     {
-                        var btn = new RoundButton
+                        Size = new Size(CellSize, CellSize),
+                        Location = new Point(col * CellSize, row * CellSize),
+                        FlatStyle = FlatStyle.Flat,
+                        Tag = new Position(row, col),
+                        Font = new Font("Segoe UI Emoji", 28)
+                    };
+
+                    cell.FlatAppearance.BorderSize = 1;
+                    cell.FlatAppearance.BorderColor = Color.Black;
+                    cell.Click += Cell_Click;
+
+                    // Проверяем, является ли клетка доступной для игры
+                    var pos = new Position(row, col);
+                    var tempBoard = new Board(7);
+                    if (tempBoard.IsPositionValid(pos))
+                    {
+                        cell.BackColor = enabledCellColor;
+                        cell.Enabled = true;
+                    }
+                    else
+                    {
+                        cell.BackColor = disabledCellColor;
+                        cell.Enabled = false;
+                        cell.Text = "✖";
+                        cell.ForeColor = Color.DarkRed;
+                    }
+
+                    cells[row, col] = cell;
+                    gamePanel.Controls.Add(cell);
+                }
+            }
+        }
+
+        private void Cell_Click(object sender, EventArgs e)
+        {
+            if (game.IsGameOver())
+            {
+                MessageBox.Show("Игра окончена! Начните новую игру.", "Конец игры",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            Button clickedCell = sender as Button;
+            Position clickedPos = (Position)clickedCell.Tag;
+
+            // Проверяем, доступна ли клетка
+            if (!game.Board.IsPositionValid(clickedPos))
+                return;
+
+            if (selectedPosition == null)
+            {
+                // Выбор фигуры
+                var piece = game.Board.GetPieceAt(clickedPos);
+                if (piece != null && piece.Type == game.CurrentTurn)
+                {
+                    selectedPosition = clickedPos;
+                    HighlightValidMoves(clickedPos);
+                }
+                else if (piece != null)
+                {
+                    MessageBox.Show($"Сейчас ходят {GetPlayerName(game.CurrentTurn)}!",
+                        "Не ваша очередь", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            else
+            {
+                // Попытка сделать ход
+                var piece = game.Board.GetPieceAt(selectedPosition);
+                if (piece != null)
+                {
+                    var move = new Move(piece, selectedPosition, clickedPos, null);
+
+                    // Проверяем, есть ли захват
+                    if (piece is Fox fox)
+                    {
+                        var captureMoves = fox.GetCaptureMoves(game.Board);
+                        var captureMove = captureMoves.FirstOrDefault(m => m.To.Equals(clickedPos));
+                        if (captureMove != null)
+                            move = captureMove;
+                    }
+
+                    if (game.MakeMove(move))
+                    {
+                        selectedPosition = null;
+                        ClearHighlights();
+                        UpdateBoard();
+                        UpdateStatus();
+
+                        if (game.IsGameOver())
                         {
-                            Size = new Size(60, 60),
-                            Location = new Point(col * 60 + 40, row * 60 + 70),
-                            Tag = new Point(col, row),
-                            FlatStyle = FlatStyle.Flat,
-                            BackColor = Color.White,
-                            Font = new Font("Arial", 12, FontStyle.Bold)
-                        };
-                        btn.Click += OnCellClick;
-                        buttons[row, col] = btn;
-                        this.Controls.Add(btn);
+                            ShowGameOverMessage();
+                        }
                     }
-                }
-            }
-        }
-
-        private void OnCellClick(object sender, EventArgs e)
-        {
-            Point p = (Point)((Button)sender).Tag;
-
-            if (selected == null)
-            {
-                string figure = gameBoard.GetFigure(p.X, p.Y);
-                if (figure != null && ((isFoxTurn && figure == "Лиса") || (!isFoxTurn && figure == "Гусь")))
-                {
-                    selected = p;
-                    HighlightMoves(p);
-                }
-                else
-                {
-                    if (ValidateAndMove(selected.Value, p))
+                    else
                     {
-                        isFoxTurn = !isFoxTurn;
-                        UpdateGUI();
-                        CheckWin();
-                    }
-                    ClearHighlight();
-                    selected = null;
-                }
-            }
-        }
-
-        private bool ValidateAndMove(Point from, Point to)
-        {
-            if (gameBoard.GetFigure(to.X, to.Y) != null)
-            {
-                return false;
-            }
-            int dx = to.X - from.X;
-            int dy = to.Y - from.Y;
-            string p = gameBoard.GetFigure(from.X, from.Y);
-
-            if (p == "Гусь" && Math.Abs(dx) + Math.Abs(dy) == 1 && dy >= 0)
-            {
-                gameBoard.Move(from, to);
-                return true;
-            }
-            if (p == "Лиса")
-            {
-                if (Math.Abs(dx) <= 1 && Math.Abs(dy) <= 1)
-                {
-                    gameBoard.Move(from, to);
-                    return true;
-                }
-                if (Math.Abs(dx) == 2 && dy == 0 || Math.Abs(dy) == 2 && dx == 0)
-                {
-                    Point mid = new Point(from.X + dx / 2, from.Y + dy / 2);
-                    if (gameBoard.GetFigure(mid.X, mid.Y) == "Гусь")
-                    {
-                        gameBoard.Remove(mid.X, mid.Y);
-                        gameBoard.Move(from, to);
-                        return true;
+                        MessageBox.Show("Недопустимый ход!\n" +
+                            "Гуси ходят только вперед по диагонали.\n" +
+                            "Лиса ходит по диагонали и может есть гусей.",
+                            "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        selectedPosition = null;
+                        ClearHighlights();
                     }
                 }
             }
-            return false;
         }
 
-        // временный клон логики для подсветки без совершения хода
-        private bool ValidateAndMoveNoExec(Point from, Point to)
+        private void HighlightValidMoves(Position pos)
         {
-            if (gameBoard.GetFigure(to.X, to.Y) != null)
+            ClearHighlights();
+
+            var piece = game.Board.GetPieceAt(pos);
+            if (piece == null) return;
+
+            var validMoves = piece.GetValidMoves(game.Board);
+            foreach (var move in validMoves)
             {
-                return false;
-            }
-            int dx = to.X - from.X;
-            int dy = to.Y - from.Y;
-            string p = gameBoard.GetFigure(from.X, from.Y);
-            if (p == "Гусь")
-            {
-                return Math.Abs(dx) + Math.Abs(dy) == 1 && dy >= 0;
-            }
-            if (p == "Лиса")
-            {
-                if (Math.Abs(dx) <= 1 && Math.Abs(dy) <= 1)
+                if (game.Board.IsPositionValid(move.To))
                 {
-                    return true;
-                }
-                if (Math.Abs(dx) == 2 && dy == 0 || Math.Abs(dy) == 2 && dx == 0)
-                {
-                    Point mid = new Point(from.X + dx / 2, from.Y + dy / 2);
-                    return gameBoard.GetFigure(mid.X, mid.Y) == "Гусь";
+                    cells[move.To.X, move.To.Y].BackColor = Color.LightGreen;
+                    cells[move.To.X, move.To.Y].FlatAppearance.BorderColor = Color.Green;
+                    cells[move.To.X, move.To.Y].FlatAppearance.BorderSize = 3;
                 }
             }
-            return false;
+
+            // Подсвечиваем выбранную фигуру
+            cells[pos.X, pos.Y].BackColor = Color.Gold;
+            cells[pos.X, pos.Y].FlatAppearance.BorderColor = Color.Orange;
+            cells[pos.X, pos.Y].FlatAppearance.BorderSize = 3;
         }
-        
-        // подсветка возможных ходов
-        private void HighlightMoves(Point from)
+
+        private void ClearHighlights()
         {
-            buttons[from.X, from.Y].BackColor = Color.Yellow;
             for (int row = 0; row < 7; row++)
             {
                 for (int col = 0; col < 7; col++)
                 {
-                    if (buttons[row, col] != null && ValidateAndMoveNoExec(from, new Point(row, col)))
+                    var pos = new Position(row, col);
+                    if (game.Board.IsPositionValid(pos))
                     {
-                        buttons[row, col].BackColor = Color.LightGreen;
+                        cells[row, col].BackColor = enabledCellColor;
                     }
-                }
-            }
-        }
-        
-        // убираем подстветку
-        private void ClearHighlight()
-        {
-            foreach (var b in buttons)
-            {
-                if (b != null)
-                {
-                    b.BackColor = Color.White;
+                    else
+                    {
+                        cells[row, col].BackColor = disabledCellColor;
+                    }
+                    cells[row, col].FlatAppearance.BorderSize = 1;
+                    cells[row, col].FlatAppearance.BorderColor = Color.Black;
                 }
             }
         }
 
-        private void UpdateGUI()
+        private void UpdateBoard()
         {
-            for (int row = 0; row < 7; row++)
-            {
-                for (int col = 0;col < 7; col++)
-                {
-                    if (buttons[row, col] != null)
-                    {
-                        string p = gameBoard.GetFigure(row, col);
-                        buttons[row, col].Text = p ?? "";
-                        buttons[row, col].ForeColor = (p == "Лиса") ? Color.Red : Color.Blue;
-                    }
-                }
-            }
-            statusLabel.Text = $"ХОД: {(isFoxTurn ? "ЛИСА" : "ГУСИ")} | Гусей: {gameBoard.GeeseCount}";
-        }
-
-        private void CheckWin()
-        {
-            if (gameBoard.GeeseCount < 8)
-            {
-                MessageBox.Show("Победила лиса!");
-                Application.Restart();
-            }
-            if (isFoxTurn && IsTrapped())
-            {
-                MessageBox.Show("Победили гуси!");
-                Application.Restart();
-            }
-        }
-        /// <summary>
-        /// метод проверки невозможности хода (лиса заперта гусями)
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        private bool IsTrapped()
-        {
-            Point p = gameBoard.FindFox();
             for (int row = 0; row < 7; row++)
             {
                 for (int col = 0; col < 7; col++)
                 {
-                    if (buttons[row, col] != null && ValidateAndMoveNoExec(p, new Point(row, col)))
+                    var pos = new Position(row, col);
+                    var piece = game.Board.GetPieceAt(pos);
+
+                    if (piece != null && game.Board.IsPositionValid(pos))
                     {
-                        return false;
+                        cells[row, col].Text = piece.Type == PlayerType.Fox ? "🦊" : "🦆";
+                        cells[row, col].ForeColor = piece.Type == PlayerType.Fox ? Color.OrangeRed : Color.SaddleBrown;
+                    }
+                    else if (game.Board.IsPositionValid(pos))
+                    {
+                        cells[row, col].Text = "●";
+                        cells[row, col].ForeColor = Color.DarkGoldenrod;
+                        cells[row, col].Font = new Font("Segoe UI Emoji", 20);
+                    }
+                    else
+                    {
+                        cells[row, col].Text = "✖";
+                        cells[row, col].ForeColor = Color.DarkRed;
+                        cells[row, col].Font = new Font("Segoe UI Emoji", 24);
                     }
                 }
             }
-            return true;
+        }
+
+        private void UpdateStatus()
+        {
+            if (game.IsGameOver())
+            {
+                var winner = game.GetWinner();
+                statusLabel.Text = winner == PlayerType.Fox ?
+                    "🦊 Лиса победила! 🏆" : "🦆 Гуси победили! 🏆";
+                statusLabel.ForeColor = winner == PlayerType.Fox ? Color.Red : Color.Green;
+                statusLabel.Font = new Font("Arial", 14, FontStyle.Bold);
+            }
+            else
+            {
+                statusLabel.Text = game.CurrentTurn == PlayerType.Fox ?
+                    "🦊 Ход лисы" : "🦆 Ход гусей";
+                statusLabel.ForeColor = Color.Black;
+                statusLabel.Font = new Font("Arial", 12, FontStyle.Bold);
+            }
+        }
+
+        private void ShowGameOverMessage()
+        {
+            var winner = game.GetWinner();
+            string message = winner == PlayerType.Fox ?
+                "🦊 Лиса победила! Поздравляем! 🎉" :
+                "🦆 Гуси победили! Отличная стратегия! 🎉";
+            MessageBox.Show(message, "Конец игры", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private string GetPlayerName(PlayerType player)
+        {
+            return player == PlayerType.Fox ? "лиса 🦊" : "гуси 🦆";
+        }
+
+        private void NewGameButton_Click(object sender, EventArgs e)
+        {
+            InitializeGame();
+            UpdateStatus();
+        }
+
+        private void UndoButton_Click(object sender, EventArgs e)
+        {
+            if (!game.IsGameOver())
+            {
+                game.UndoMove();
+                selectedPosition = null;
+                ClearHighlights();
+                UpdateBoard();
+                UpdateStatus();
+            }
+            else
+            {
+                MessageBox.Show("Игра уже окончена. Начните новую игру.",
+                    "Нельзя отменить", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
     }
 }

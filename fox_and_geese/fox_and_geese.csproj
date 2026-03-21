@@ -47,12 +47,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Board.cs" />
+    <Compile Include="Fox.cs" />
+    <Compile Include="Game.cs" />
+    <Compile Include="GameRules.cs" />
+    <Compile Include="GameState.cs" />
+    <Compile Include="Goose.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Move.cs" />
+    <Compile Include="Piece.cs" />
+    <Compile Include="PlayerType.cs" />
+    <Compile Include="Position.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RoundButton.cs">
