@@ -8,24 +8,87 @@ namespace fox_and_geese
 {
     public partial class MainForm : Form
     {
+        private const int CELL_SIZE = 65;
+        private Color enabledCellColor = Color.SandyBrown;
+
         private Game game;
-        private RoundButton[,] cells;
-        private const int CellSize = 65;
-        private Panel gamePanel;
+        private Button newGameButton;
+        private Button undoButton;
         private Label statusLabel;
         private Label geeseCountLabel;
         private Label captureCountLabel;
-        private Button newGameButton;
-        private Button undoButton;
+        private Panel gamePanel;
         private Position selectedPosition;
-        private Color enabledCellColor = Color.SandyBrown;
-        //private Color disabledCellColor = Color.DimGray;
-        //private Color centerAreaColor = Color.Peru;
+        private RoundButton[,] cells;
 
         public MainForm()
         {
             InitializeComponent();
+            InitializeUIElements();
             InitializeGame();
+        }
+
+        private void InitializeUIElements()
+        {
+            gamePanel = new Panel
+            {
+                Location = new Point(25, 35),
+                Size = new Size(7 * CELL_SIZE + 10, 7 * CELL_SIZE + 10),
+                BackColor = Color.DimGray
+            };
+
+            statusLabel = new Label
+            {
+                Location = new Point(20, 10),
+                Size = new Size(400, 30),
+                Font = new Font("Arial", 12, FontStyle.Bold),
+                Text = "Ход гусей",
+            };
+
+            geeseCountLabel = new Label
+            {
+                Location = new Point(25, 7 * CELL_SIZE + 60),
+                Size = new Size(200, 25),
+                Font = new Font("Arial", 10),
+                Text = "Осталось гусей: 13",
+                ForeColor = Color.White
+            };
+
+            captureCountLabel = new Label
+            {
+                Location = new Point(25, 7 * CELL_SIZE + 85),
+                Size = new Size(200, 25),
+                Font = new Font("Arial", 10),
+                Text = "Съедено гусей: 0",
+                ForeColor = Color.White
+            };
+
+            newGameButton = new Button
+            {
+                Location = new Point(300, 7 * CELL_SIZE + 60),
+                Size = new Size(100, 35),
+                Text = "Новая игра",
+                BackColor = Color.LightGreen,
+                Font = new Font("Arial", 10, FontStyle.Bold)
+            };
+            newGameButton.Click += NewGameButton_Click;
+
+            undoButton = new Button
+            {
+                Location = new Point(400, 7 * CELL_SIZE + 60),
+                Size = new Size(80, 35),
+                Text = "Отмена",
+                BackColor = Color.LightCoral,
+                Font = new Font("Arial", 10, FontStyle.Bold)
+            };
+            undoButton.Click += UndoButton_Click;
+
+            this.Controls.Add(gamePanel);
+            this.Controls.Add(statusLabel);
+            this.Controls.Add(geeseCountLabel);
+            this.Controls.Add(captureCountLabel);
+            this.Controls.Add(newGameButton);
+            this.Controls.Add(undoButton);
         }
 
         private void InitializeGame()
@@ -42,7 +105,6 @@ namespace fox_and_geese
         {
             cells = new RoundButton[7, 7];
             gamePanel.Controls.Clear();
-            gamePanel.BackColor = Color.DimGray;
 
             for (int row = 0; row < 7; row++)
             {
@@ -50,8 +112,8 @@ namespace fox_and_geese
                 {
                     RoundButton cell = new RoundButton
                     {
-                        Size = new Size(CellSize, CellSize),
-                        Location = new Point(col * CellSize, row * CellSize),
+                        Size = new Size(CELL_SIZE, CELL_SIZE),
+                        Location = new Point(col * CELL_SIZE, row * CELL_SIZE),
                         FlatStyle = FlatStyle.Flat,
                         Tag = new Position(row, col),
                         Font = new Font("Segoe UI Emoji", 28)
@@ -82,8 +144,10 @@ namespace fox_and_geese
         {
             if (game.IsGameOver())
             {
-                MessageBox.Show("Игра окончена! Начните новую игру.", "Конец игры",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Игра окончена! Начните новую игру.",
+                                "Конец игры",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
                 return;
             }
 
@@ -104,7 +168,9 @@ namespace fox_and_geese
                 else if (piece != null)
                 {
                     MessageBox.Show($"Сейчас ходят {GetPlayerName(game.CurrentTurn)}!",
-                        "Не ваша очередь", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    "Не ваша очередь",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Warning);
                 }
             }
             else
@@ -137,23 +203,24 @@ namespace fox_and_geese
                         else if (game.IsCaptureSequence())
                         {
                             int captureCount = game.GetCaptureCount();
-                            int remainingGeese = game.GetRemainingGeeseCount();
-                            statusLabel.Text = $"Лиса рубит! Съедено гусей: {captureCount + 1} (осталось: {remainingGeese})";
+                            statusLabel.Text = $"Лиса рубит! Съедено гусей: {captureCount} (осталось: {game.Board.GetGeeseCount()})";
                             statusLabel.ForeColor = Color.Red;
                         }
                     }
                     else
                     {
-                        string errorMessage = "Недопустимый ход!\n\n";
-                        errorMessage += "Гуси ходят только по горизонтали и вертикали\n";
-                        errorMessage += "Лиса ходит по горизонтали, вертикали и диагонали\n";
-                        errorMessage += "Лиса может рубить гусей, перепрыгивая через них\n";
-                        errorMessage += "При рубке лиса ходит несколько раз подряд\n";
-                        errorMessage += "Цель лисы: есть гусей, пока не останется 8 шт.)\n";
-                        errorMessage += "Цель гусей: заблокировать лису";
+                        string errorMessage = "Недопустимый ход!\n\n" +
+                                              "Гуси ходят только по горизонтали и вертикали\n" +
+                                              "Лиса ходит по горизонтали, вертикали и диагонали\n" +
+                                              "Лиса может рубить гусей, перепрыгивая через них\n" +
+                                              "При рубке лиса может ходить несколько раз подряд\n" +
+                                              "Цель лисы: есть гусей, пока не останется 8 шт.)\n" +
+                                              "Цель гусей: заблокировать лису";
 
-                        MessageBox.Show(errorMessage, "Ошибка",
-                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show(errorMessage,
+                                        "Ошибка",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Warning);
                         selectedPosition = null;
                         ClearHighlights();
                     }
@@ -177,7 +244,7 @@ namespace fox_and_geese
                     cells[move.To.X, move.To.Y].FlatAppearance.BorderColor = Color.Green;
                     cells[move.To.X, move.To.Y].FlatAppearance.BorderSize = 3;
 
-                    // Если это рубка, добавляем специальный индикатор
+                    // если ход - рубка, то добавляем специальный индикатор
                     if (move.CapturedPiece != null)
                     {
                         cells[move.To.X, move.To.Y].Text = "🔥";
@@ -190,7 +257,7 @@ namespace fox_and_geese
                 }
             }
 
-            // Подсвечиваем выбранную фигуру
+            // подсвечиваем выбранную фигуру
             cells[pos.X, pos.Y].BackColor = Color.Gold;
             cells[pos.X, pos.Y].FlatAppearance.BorderColor = Color.Orange;
             cells[pos.X, pos.Y].FlatAppearance.BorderSize = 3;
@@ -226,17 +293,11 @@ namespace fox_and_geese
                         cells[row, col].Text = piece.Type == PlayerType.Fox ? "🦊" : "🦆";
                         cells[row, col].ForeColor = piece.Type == PlayerType.Fox ? Color.OrangeRed : Color.SaddleBrown;
                     }
-                    else if (game.Board.IsPositionValid(pos))
+                    else
                     {
                         cells[row, col].Text = "●";
                         cells[row, col].ForeColor = Color.DarkGoldenrod;
                         cells[row, col].Font = new Font("Segoe UI Emoji", 20);
-                    }
-                    else
-                    {
-                        cells[row, col].Text = "✖";
-                        cells[row, col].ForeColor = Color.DarkRed;
-                        cells[row, col].Font = new Font("Segoe UI Emoji", 24);
                     }
                 }
             }
@@ -247,17 +308,13 @@ namespace fox_and_geese
             if (game.IsGameOver())
             {
                 var winner = game.GetWinner();
-                statusLabel.Text = winner == PlayerType.Fox ?
-                    "Лиса победила!" : "Гуси победили!";
+                statusLabel.Text = winner == PlayerType.Fox ? "Лиса победила!" : "Гуси победили!";
                 statusLabel.ForeColor = winner == PlayerType.Fox ? Color.Red : Color.Green;
-                statusLabel.Font = new Font("Arial", 14, FontStyle.Bold);
             }
             else
             {
-                statusLabel.Text = game.CurrentTurn == PlayerType.Fox ?
-                    "Ход лисы" : "Ход гусей";
-                statusLabel.ForeColor = Color.Black;
-                statusLabel.Font = new Font("Arial", 12, FontStyle.Bold);
+                statusLabel.Text = game.CurrentTurn == PlayerType.Fox ? "Ход лисы" : "Ход гусей";
+                statusLabel.ForeColor = Color.White;
             }
         }
 

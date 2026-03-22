@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 
 
 namespace fox_and_geese
@@ -83,11 +82,6 @@ namespace fox_and_geese
                     }
                 }
             }
-
-            // Выводим отладочную информацию
-            System.Diagnostics.Debug.WriteLine($"Инициализация доски: размещено {geesePlaced} гусей");
-            System.Diagnostics.Debug.WriteLine($"Доступные позиции: {validPositions.Count}");
-            System.Diagnostics.Debug.WriteLine($"Позиции гусей: {string.Join(", ", GetGeese().Select(g => $"({g.Position.X},{g.Position.Y})"))}");
         }
 
         public void PlacePiece(Piece piece, Position pos)
