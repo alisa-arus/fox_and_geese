@@ -13,18 +13,17 @@ namespace fox_and_geese
         {
             var moves = new List<Move>();
 
-            // Лиса может ходить во всех направлениях: горизонталь, вертикаль, диагональ
+            // лиса может ходить во всех направлениях: горизонталь, вертикаль, диагональ
             var allDirections = new[]
             {
-                // Горизонтальные и вертикальные
+                // ходы по горизонтали и вертикали
                 new Position(-1, 0), new Position(1, 0),
                 new Position(0, -1), new Position(0, 1),
-                // Диагональные
+                // ходы по диагонали
                 new Position(-1, -1), new Position(-1, 1),
                 new Position(1, -1), new Position(1, 1)
             };
-
-            // Обычные ходы (на соседнюю клетку)
+            // обычные ходы (на соседнюю клетку)
             foreach (var dir in allDirections)
             {
                 var newPos = new Position(Position.X + dir.X, Position.Y + dir.Y);
@@ -33,8 +32,7 @@ namespace fox_and_geese
                     moves.Add(new Move(this, Position, newPos, null));
                 }
             }
-
-            // Ходы со съеданием гусей (прыжок через гуся)
+            // ходы рубки (прыжок через гуся)
             var captureMoves = GetCaptureMoves(board);
             moves.AddRange(captureMoves);
 
@@ -45,13 +43,13 @@ namespace fox_and_geese
         {
             var captures = new List<Move>();
 
-            // Лиса может рубить во всех направлениях (как в шашках)
+            // лиса может рубить во всех направлениях
             var allDirections = new[]
             {
-                // Горизонтальные и вертикальные
+                // рубка по горизонтали и по вертикали
                 new Position(-1, 0), new Position(1, 0),
                 new Position(0, -1), new Position(0, 1),
-                // Диагональные
+                // диагональная рубка (уточнить в правилах)
                 //new Position(-1, -1), new Position(-1, 1),
                 //new Position(1, -1), new Position(1, 1)
             };
@@ -68,15 +66,7 @@ namespace fox_and_geese
                     captures.Add(new Move(this, Position, targetPos, adjacentPiece));
                 }
             }
-
             return captures;
-        }
-
-        // Проверка, может ли лиса сделать еще один захват после текущего
-        public bool HasAdditionalCaptures(Board board, Position currentPos)
-        {
-            var tempFox = new Fox(currentPos);
-            return tempFox.GetCaptureMoves(board).Count > 0;
         }
 
         public override Piece Clone()

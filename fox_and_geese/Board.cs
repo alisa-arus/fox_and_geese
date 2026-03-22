@@ -22,7 +22,7 @@ namespace fox_and_geese
 
         private void InitializeValidPositions()
         {
-            // Центральная горизонталь (строки 2,3,4)
+            // три строки центральной горизонтали
             for (int row = 2; row <= 4; row++)
             {
                 for (int col = 0; col < Size; col++)
@@ -31,7 +31,7 @@ namespace fox_and_geese
                 }
             }
 
-            // Центральная вертикаль (столбцы 2,3,4)
+            // три столбца центральной вертикали
             for (int col = 2; col <= 4; col++)
             {
                 for (int row = 0; row < Size; row++)
@@ -40,11 +40,9 @@ namespace fox_and_geese
                 }
             }
 
-            // Удаляем дубликаты и углы
+            // удаляем дубликаты и углы
             var center = new Position(3, 3);
-            var toRemove = validPositions
-                .Where(pos => Math.Abs(pos.X - center.X) > 2 && Math.Abs(pos.Y - center.Y) > 2)
-                .ToList();
+            var toRemove = validPositions.Where(pos => Math.Abs(pos.X - center.X) > 2 && Math.Abs(pos.Y - center.Y) > 2).ToList();
 
             foreach (var pos in toRemove)
             {
@@ -54,25 +52,25 @@ namespace fox_and_geese
 
         private void InitializeBoard()
         {
-            // Размещаем лису в центре
+            // в начале игры лиса помещается в центр
             var foxPos = new Position(3, 3);
             var fox = new Fox(foxPos);
             PlacePiece(fox, foxPos);
 
-            // Размещаем 13 гусей на трёх верхних рядах
+            // в начале игры все 13 гусей размещаются на трёх верхних рядах
             int geesePlaced = 0;
             int targetGeese = 13;
 
-            // Сначала заполняем верхние три ряда (строки 0, 1, 2)
+            // заполняем верхние три ряда игрового поля
             for (int row = 0; row < 3 && geesePlaced < targetGeese; row++)
             {
                 for (int col = 0; col < Size && geesePlaced < targetGeese; col++)
                 {
                     var pos = new Position(row, col);
-                    // Проверяем, что позиция доступна и не занята лисой
+                    // проверяем, что позиция доступна и не занята лисой
                     if (IsPositionValid(pos) && !pos.Equals(foxPos))
                     {
-                        // Проверяем, что на этой позиции еще нет фигуры
+                        // проверяем, что на этой позиции еще нет фигуры
                         if (GetPieceAt(pos) == null)
                         {
                             var goose = new Goose(pos);
@@ -106,9 +104,7 @@ namespace fox_and_geese
 
         public bool IsPositionValid(Position pos)
         {
-            return pos.X >= 0 && pos.X < Size &&
-                   pos.Y >= 0 && pos.Y < Size &&
-                   validPositions.Contains(pos);
+            return pos.X >= 0 && pos.X < Size && pos.Y >= 0 && pos.Y < Size && validPositions.Contains(pos);
         }
 
         public Fox GetFox()
@@ -121,38 +117,9 @@ namespace fox_and_geese
             return pieces.Values.OfType<Goose>().ToList();
         }
 
-        public Board Clone()
-        {
-            var newBoard = new Board(Size);
-            newBoard.pieces.Clear();
-
-            foreach (var piece in pieces.Values)
-            {
-                var clonedPiece = piece.Clone();
-                newBoard.PlacePiece(clonedPiece, clonedPiece.Position);
-            }
-
-            return newBoard;
-        }
-
-        public List<Position> GetValidPositions()
-        {
-            return validPositions.ToList();
-        }
-
         public int GetGeeseCount()
         {
             return GetGeese().Count;
-        }
-
-        public bool IsCenterPosition(Position pos)
-        {
-            return pos.X >= 2 && pos.X <= 4 && pos.Y >= 2 && pos.Y <= 4;
-        }
-
-        public int GetGeeseOnTopRows()
-        {
-            return GetGeese().Count(g => g.Position.X < 3);
         }
     }
 }

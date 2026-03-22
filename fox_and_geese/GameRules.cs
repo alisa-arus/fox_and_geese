@@ -8,7 +8,7 @@ namespace fox_and_geese
     {
         private static GameRules instance;
         private const int INITIAL_GEESE_COUNT = 13;
-        private const int FOX_WIN_CONDITION = 8; // Лиса побеждает, когда остается 8 гусей (съедено 5)
+        private const int FOX_WIN_CONDITION = 8;
 
         private GameRules() { }
 
@@ -35,61 +35,24 @@ namespace fox_and_geese
         {
             var fox = board.GetFox();
             var geese = board.GetGeese();
-            //int currentGeeseCount = geese.Count;
 
-            // Проверка победы лисы: осталось 8 или меньше гусей
-            // Важно: проверяем ТОЛЬКО если игра активна и был совершен хотя бы один ход
+            // проверяем победу лисы (осталось 8 или меньше гусей)
             if (geese.Count <= FOX_WIN_CONDITION)
             {
                 return PlayerType.Fox;
             }
-
-            // Проверка победы гусей: лиса не может сделать ход
+            // проверяем победу гусей (лиса заблокирована)
             if (fox.GetValidMoves(board).Count == 0)
             {
-                //var foxMoves = fox.GetValidMoves(board);
-                //if (foxMoves.Count == 0)
-                //{
-                    return PlayerType.Goose;
-                //}
+                return PlayerType.Goose;
             }
-
-            // Игра продолжается
+            // продолжаем игру
             return null;
         }
-
-        //public bool IsFoxWinByGeeseCount(int geeseCount)
-        //{
-        //    return geeseCount <= FOX_WIN_CONDITION;
-        //}
 
         public int GetGeeseToCapture()
         {
             return INITIAL_GEESE_COUNT - FOX_WIN_CONDITION;
-        }
-
-        public List<Move> GetAvailableMoves(Board board, PlayerType player)
-        {
-            var moves = new List<Move>();
-
-            if (player == PlayerType.Fox)
-            {
-                var fox = board.GetFox();
-                if (fox != null)
-                    moves.AddRange(fox.GetValidMoves(board));
-            }
-            else
-            {
-                foreach (var goose in board.GetGeese())
-                    moves.AddRange(goose.GetValidMoves(board));
-            }
-
-            return moves;
-        }
-
-        public bool IsPositionOnBoard(Position pos, Board board)
-        {
-            return board.IsPositionValid(pos);
         }
 
         public int GetInitialGeeseCount()

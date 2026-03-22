@@ -121,7 +121,7 @@ namespace fox_and_geese
 
                     cell.Click += Cell_Click;
 
-                    // Проверяем, является ли клетка доступной для игры
+                    // проверяем доступность поля для игры
                     var pos = new Position(row, col);
                     var tempBoard = new Board(7);
                     if (tempBoard.IsPositionValid(pos))
@@ -133,7 +133,6 @@ namespace fox_and_geese
                     {
                         cell.Visible = false;
                     }
-
                     cells[row, col] = cell;
                     gamePanel.Controls.Add(cell);
                 }
@@ -320,17 +319,13 @@ namespace fox_and_geese
 
         private void UpdateCounters()
         {
-            int geeseCount = game.Board.GetGeeseCount();
-            int initialGeese = 13;
-            int capturedGeese = initialGeese - geeseCount;
+            geeseCountLabel.Text = $"Осталось гусей: {game.Board.GetGeeseCount()}";
+            captureCountLabel.Text = $"Съедено гусей: {game.GetCapturedGeeseCount()}";
 
-            geeseCountLabel.Text = $"Осталось гусей: {geeseCount}";
-            captureCountLabel.Text = $"Съедено гусей: {capturedGeese}";
-
-            if (capturedGeese >= 8)
+            // когда лисе остался один гусь до победы
+            if (game.GetCapturedGeeseCount() >= 4)
             {
                 captureCountLabel.ForeColor = Color.Red;
-                captureCountLabel.Font = new Font("Arial", 10, FontStyle.Bold);
             }
         }
 
@@ -338,14 +333,14 @@ namespace fox_and_geese
         private void ShowGameOverMessage()
         {
             var winner = game.GetWinner();
-            int geeseCount = game.Board.GetGeeseCount();
-            int capturedGeese = 13 - geeseCount;
-
             string message = winner == PlayerType.Fox ?
-                $"Лиса победила!\n\nСъедено гусей: {capturedGeese}" :
-                $"Гуси победили!\n\nОсталось гусей: {geeseCount}";
+                $"Лиса победила!\n\nСъедено гусей: {game.GetCapturedGeeseCount()}" :
+                $"Гуси победили!\n\nОсталось гусей: {game.Board.GetGeeseCount()}";
 
-            MessageBox.Show(message, "Конец игры", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(message,
+                            "Конец игры",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
         }
 
         private string GetPlayerName(PlayerType player)
@@ -373,7 +368,9 @@ namespace fox_and_geese
             else
             {
                 MessageBox.Show("Игра уже окончена. Начните новую игру.",
-                    "Нельзя отменить", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                "Нельзя отменить",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
             }
         }
     }
