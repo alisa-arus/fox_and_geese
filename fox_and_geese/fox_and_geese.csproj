@@ -93,5 +93,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LibraryClasses\LibraryClasses.vcxproj">
+      <Project>{d527c770-370f-4a41-b097-9faff89e2cc4}</Project>
+      <Name>LibraryClasses</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
